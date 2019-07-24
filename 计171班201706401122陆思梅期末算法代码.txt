@@ -1,0 +1,172 @@
+#include <iostream>
+using namespace std;
+
+
+#pragma warning(disable : 4996)
+#define NONE 0
+//依次将第一排数据 物品数量 约束个数 期望值 填入下列三个0处
+#define n 15
+#define m 10
+#define Desired 4015
+int Volue = 0;//当前价值最大值
+
+
+
+int** consum;
+
+int* v; //每个物品的价tV
+
+int* u;//当前约束向量
+
+bool* N;//是否放入
+
+
+typedef struct traceTree {
+	traceTree* Fal;
+	traceTree* Tru;
+	traceTree* lastNode;
+	int I;
+	int R[30];//当前剩余约束向量
+	int Volue;//当前已获得的最大价值
+}traceTree;
+traceTree* PTR = NULL;//当前价值最大的点
+void  Information()
+{
+	cout << "输入" << n << "个物品的价值:";
+
+	v = (int*)malloc(sizeof(int) * n);
+	for (int i = 0; i < n; i++)
+		cin >> v[i];
+
+
+	cout << "输入每个物品的" << m << "个消耗：(共" << n << "个)" << endl;
+	consum = (int**)malloc(sizeof(int*) * n);
+
+	for (int i = 0; i < n; i++)
+	{
+		consum[i] = (int*)malloc(sizeof(int) * m);
+	}
+
+
+	//读取数据
+	for (int j = 0; j < m; j++)
+	{
+		for (int i = 0; i < n; i++)
+		{
+
+			cin >> consum[i][j];
+		}
+
+	}
+	cout << endl;
+	//获取约束向量
+	cout << "输入背包的" << m << "个约束：";
+	u = (int*)malloc(sizeof(int) * m);
+	for (int i = 0; i < m; i++)
+	{
+		cin >> u[i];
+	}
+	cout << "约束上限为:";
+
+
+	//声明数组X，记录装入背包的物品
+	N = (bool*)malloc(sizeof(bool) * n);
+	for (int i = 0; i < n; i++)
+		N[i] = 0;
+	//初始化完成
+
+}
+
+void Forward(traceTree* node)
+{
+	if (node->I == n - 1 || node == NULL)
+		return;
+
+	bool Keepon = 1;
+	int tI = node->I + 1;
+	//判断当前容量是否可以装下
+	for (int i = 0; i < m; i++)
+	{
+
+		if (node->R[i] < consum[tI][i])
+		{
+			Keepon = 0;
+			break;
+		}
+	}
+
+	//如果装得下，则建立右节点
+	if (Keepon)
+	{
+		traceTree* newNode = (traceTree*)malloc(sizeof(traceTree));//新节点
+		newNode->lastNode = node;//父亲
+		node->Tru = newNode;
+
+		newNode->I = tI;//深度
+		newNode->Volue = node->Volue + v[tI];
+		if (newNode->Volue > Volue)
+		{
+			Volue = newNode->Volue;
+			PTR = newNode;
+		}
+		for (int i = 0; i < 10; i++)
+			newNode->R[i] = node->R[i] - consum[tI][i];
+		Forward(newNode);
+	}
+
+	traceTree* newNodeL = (traceTree*)malloc(sizeof(traceTree));//新节点
+	newNodeL->lastNode = node;//父亲
+	node->Fal = newNodeL;
+
+	newNodeL->I = tI;
+	newNodeL->Volue = node->Volue;
+	for (int i = 0; i < 10; i++)
+		newNodeL->R[i] = node->R[i];
+	Forward(newNodeL);
+}
+
+
+int main()
+{
+
+
+	Information();
+	//create tree head
+	traceTree* head = (traceTree*)malloc(sizeof(traceTree));
+	head->Fal = head->Tru = NULL;
+	head->lastNode = head;
+	head->I = -1;
+
+	for (int i = 0; i < m; i++)
+		head->R[i] = u[i];
+	head->Volue = NONE;
+
+	//record to the head.  create hole tree
+	Forward(head);
+	cout << "回溯法结果为：" << Volue << endl;
+
+	cout << "各物品放入情况为：";
+	traceTree* ptr = PTR;
+
+	while (1)
+	{
+		if (ptr == NULL)
+		{
+
+		}
+		if (ptr->I < 0)
+			break;
+		if (ptr == ptr->lastNode->Fal)
+			N[ptr->I] = 0;
+		else
+			N[ptr->I] = 1;
+		ptr = ptr->lastNode;
+	}
+	for (int i = 0; i < n; i++)
+		cout << N[i] << " ";
+
+
+
+	system("pause");
+	return 0;
+}
